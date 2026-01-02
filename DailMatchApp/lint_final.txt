@@ -1,0 +1,58 @@
+
+> DailMatchApp@0.0.1 lint
+> eslint .
+
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\components\Skeleton.tsx
+  56:54  warning  Inline style: { marginBottom: 8 }      react-native/no-inline-styles
+  57:54  warning  Inline style: { marginBottom: 20 }     react-native/no-inline-styles
+  58:74  warning  Inline style: { marginBottom: 20 }     react-native/no-inline-styles
+  59:73  warning  Inline style: { marginBottom: 15 }     react-native/no-inline-styles
+  60:54  warning  Inline style: { marginBottom: 10 }     react-native/no-inline-styles
+  73:62  warning  Inline style: { marginBottom: 8 }      react-native/no-inline-styles
+  91:28  warning  Inline style: { marginHorizontal: 8 }  react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\EditProfileScreen.tsx
+   64:8   error    React Hook useEffect has a missing dependency: 'photos'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  237:30  warning  Inline style: { height: 50 }                                                                               react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\FiltersScreen.tsx
+   87:23  warning  Do not define components during render. React will see a new component type on every render and destroy the entire subtree’s DOM nodes and state (https://reactjs.org/docs/reconciliation.html#elements-of-different-types). Instead, move this component definition out of the parent component “FiltersScreen” and pass data as props  react/no-unstable-nested-components
+  259:30  warning  Inline style: { height: 100 }                                                                                                                                                                                                                                                                                                            react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\HomeScreen.tsx
+   11:5   error    'Dimensions' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  131:8   error    React Hook useEffect has a missing dependency: 'loadProfiles'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  187:31  error    'profileId' is defined but never used. Allowed unused args must match /^_/u                                      @typescript-eslint/no-unused-vars
+  193:36  error    'profileId' is defined but never used. Allowed unused args must match /^_/u                                      @typescript-eslint/no-unused-vars
+  219:31  error    'profileId' is defined but never used. Allowed unused args must match /^_/u                                      @typescript-eslint/no-unused-vars
+  325:51  warning  Inline style: { flexDirection: 'row', gap: 20, alignItems: 'center' }                                            react-native/no-inline-styles
+  349:38  warning  Inline style: { flexDirection: 'row', alignItems: 'center', flex: 1 }                                            react-native/no-inline-styles
+  356:38  warning  Inline style: { flexDirection: 'row', gap: 15 }                                                                  react-native/no-inline-styles
+  459:34  warning  Inline style: { height: 120 }                                                                                    react-native/no-inline-styles
+  514:36  warning  Inline style: { width: 40, height: 40, resizeMode: 'contain' }                                                   react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\MatchesScreen.tsx
+  203:30  warning  Inline style: { flex: 1, justifyContent: 'center', alignItems: 'center' }  react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\OnboardingScreen.tsx
+  327:26  warning  Inline style: { height: 100 }  react-native/no-inline-styles
+  340:34  warning  Inline style: { width: 28 }    react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\ProfileScreen.tsx
+   90:65  warning  Inline style: { backgroundColor: '#FFF0F3' }  react-native/no-inline-styles
+   97:65  warning  Inline style: { backgroundColor: '#FFF8E0' }  react-native/no-inline-styles
+  104:65  warning  Inline style: { backgroundColor: '#E8F5E9' }  react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\ReportScreen.tsx
+   79:30  warning  Inline style: { width: 28 }    react-native/no-inline-styles
+  163:30  warning  Inline style: { height: 100 }  react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\SettingsScreen.tsx
+  129:30  warning  Inline style: { width: 28 }  react-native/no-inline-styles
+
+C:\Users\yashg\MobileApp\DailMatchApp\src\screens\SignupScreen.tsx
+  29:13  warning  Missing radix parameter  radix
+
+✖ 31 problems (6 errors, 25 warnings)
+
