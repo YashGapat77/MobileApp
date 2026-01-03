@@ -44,7 +44,8 @@ def get_profile():
     
     if profile:
         photos = json.loads(profile['photos']) if profile['photos'] else []
-        photos = [p if p.startswith('http') else f"http://10.0.2.2:5000/api/user/uploads/{p}" for p in photos]
+        base_url = request.host_url.rstrip('/')
+        photos = [p if p.startswith('http') else f"{base_url}/api/user/uploads/{p}" for p in photos]
 
         response.update({
             'bio': profile['bio'],
@@ -135,7 +136,8 @@ def get_public_profile(target_id):
     
     if profile:
         photos = json.loads(profile['photos']) if profile['photos'] else []
-        photos = [p if p.startswith('http') else f"http://10.0.2.2:5000/api/user/uploads/{p}" for p in photos]
+        base_url = request.host_url.rstrip('/')
+        photos = [p if p.startswith('http') else f"{base_url}/api/user/uploads/{p}" for p in photos]
 
         response.update({
             'bio': profile['bio'],
@@ -200,7 +202,8 @@ def get_potential_matches():
     
     for row in rows:
         photos = json.loads(row['photos']) if row['photos'] else []
-        photos = [p if p.startswith('http') else f"http://10.0.2.2:5000/api/user/uploads/{p}" for p in photos]
+        base_url = request.host_url.rstrip('/')
+        photos = [p if p.startswith('http') else f"{base_url}/api/user/uploads/{p}" for p in photos]
         
         # Calculate age
         dob_year = int(row['dob'].split('-')[0]) if row['dob'] else 2000
@@ -306,7 +309,8 @@ def get_matches():
                 
             photo = photos[0] if photos else 'https://randomuser.me/api/portraits/women/1.jpg'
             if photo and not photo.startswith('http'):
-                photo = f"http://10.0.2.2:5000/api/user/uploads/{photo}"
+                base_url = request.host_url.rstrip('/')
+                photo = f"{base_url}/api/user/uploads/{photo}"
                 
             other_user_id = row['user1_id'] if int(row['user2_id']) == int(user_id) else row['user2_id']
             

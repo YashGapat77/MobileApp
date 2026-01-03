@@ -19,10 +19,10 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import io from 'socket.io-client';
-import { matchAPI, userAPI } from '../services/api';
+import { matchAPI, userAPI, BASE_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = BASE_URL;
 
 interface Message {
     id: string;

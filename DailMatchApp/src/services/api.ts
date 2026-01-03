@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Update this to your Flask backend URL
 // For local development on Android emulator, use 10.0.2.2 instead of localhost
-const API_BASE_URL = 'http://localhost:5000/api';
+export const BASE_URL = 'https://soul-fix-gcrn.onrender.com';
+const API_BASE_URL = `${BASE_URL}/api`;
 
 // Create axios instance with default config
 const api = axios.create({
