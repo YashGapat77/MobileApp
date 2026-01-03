@@ -31,6 +31,10 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(user_bp, url_prefix='/api/user')
 
+@app.route('/')
+def index():
+    return "SoulFix Backend is Running!"
+
 @app.route('/api/health')
 def health():
     return {'status': 'ok'}
