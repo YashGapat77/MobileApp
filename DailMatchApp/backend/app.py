@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch()
+eventlet.monkey_patch(os=False)
 
 from flask import Flask
 from flask_cors import CORS
