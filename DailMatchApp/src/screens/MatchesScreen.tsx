@@ -50,61 +50,8 @@ const MatchesScreen = ({ navigation }: any) => {
             setMatches(allMatches.filter((m: Match) => m.lastMessage && m.lastMessage !== 'Say hi!'));
         } catch (error) {
             console.error('Error loading matches:', error);
-            // Mock data
-            setNewMatches([
-                {
-                    id: '1',
-                    userId: '1',
-                    name: 'Sarah',
-                    photo: 'https://randomuser.me/api/portraits/women/1.jpg',
-                    lastMessage: '',
-                    timestamp: 'New',
-                    unread: true,
-                    online: true,
-                },
-                {
-                    id: '2',
-                    userId: '2',
-                    name: 'Emma',
-                    photo: 'https://randomuser.me/api/portraits/women/3.jpg',
-                    lastMessage: '',
-                    timestamp: 'New',
-                    unread: true,
-                    online: false,
-                },
-            ]);
-            setMatches([
-                {
-                    id: '3',
-                    userId: '3',
-                    name: 'Olivia',
-                    photo: 'https://randomuser.me/api/portraits/women/5.jpg',
-                    lastMessage: 'Hey! How was your weekend?',
-                    timestamp: '2m ago',
-                    unread: true,
-                    online: true,
-                },
-                {
-                    id: '4',
-                    userId: '4',
-                    name: 'Sophia',
-                    photo: 'https://randomuser.me/api/portraits/women/7.jpg',
-                    lastMessage: 'That sounds amazing! 😊',
-                    timestamp: '1h ago',
-                    unread: false,
-                    online: false,
-                },
-                {
-                    id: '5',
-                    userId: '5',
-                    name: 'Ava',
-                    photo: 'https://randomuser.me/api/portraits/women/9.jpg',
-                    lastMessage: 'Would love to grab coffee sometime',
-                    timestamp: 'Yesterday',
-                    unread: false,
-                    online: false,
-                },
-            ]);
+            setNewMatches([]);
+            setMatches([]);
         } finally {
             setLoading(false);
         }

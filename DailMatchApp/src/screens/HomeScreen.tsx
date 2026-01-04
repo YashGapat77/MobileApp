@@ -128,11 +128,11 @@ const HomeScreen = ({ navigation }: any) => {
             if (response.matches && response.matches.length > 0) {
                 setProfiles(response.matches);
             } else {
-                setProfiles(mockProfiles);
+                setProfiles([]);
             }
         } catch (error) {
             console.error('Error loading profiles:', error);
-            setProfiles(mockProfiles);
+            setProfiles([]);
         } finally {
             setLoading(false);
         }
