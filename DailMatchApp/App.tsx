@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import TutorialScreen from './src/screens/TutorialScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import MatchesScreen from './src/screens/MatchesScreen';
@@ -14,6 +15,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import FiltersScreen from './src/screens/FiltersScreen';
 import ReportScreen from './src/screens/ReportScreen';
 import MatchProfileScreen from './src/screens/MatchProfileScreen';
+import MainTabNavigator from './src/navigation/MainTabNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import OfflineNotice from './src/components/OfflineNotice';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -34,13 +36,15 @@ const App = () => {
                     >
                         <Stack.Screen name="Splash" component={SplashScreen} />
                         <Stack.Screen name="Login" component={LoginScreen} />
+                        <Stack.Screen name="Tutorial" component={TutorialScreen} />
                         <Stack.Screen name="Signup" component={SignupScreen} />
                         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-                        <Stack.Screen name="Home" component={HomeScreen} />
-                        <Stack.Screen name="Matches" component={MatchesScreen} />
+
+                        {/* Main Tab Navigator replaces Home, Matches, Profile in root stack */}
+                        <Stack.Screen name="Main" component={MainTabNavigator} />
+
                         <Stack.Screen name="Chat" component={ChatScreen} />
                         <Stack.Screen name="MatchProfile" component={MatchProfileScreen} />
-                        <Stack.Screen name="Profile" component={ProfileScreen} />
                         <Stack.Screen
                             name="EditProfile"
                             component={EditProfileScreen}
