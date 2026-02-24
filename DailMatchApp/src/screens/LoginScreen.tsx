@@ -30,18 +30,21 @@ const LoginScreen = ({ navigation }: any) => {
         try {
             const data = await authAPI.login(email, password);
 
-            if (data.token) {
+            if (data && data.token) {
                 // authAPI handles storing authToken and userId
-                // We store the full user object for profile use
-                await AsyncStorage.setItem('user', JSON.stringify(data.user));
-                navigation.replace('Home');
+                // We store the full user object for profile use if it exists
+                if (data.user) {
+                    await AsyncStorage.setItem('user', JSON.stringify(data.user));
+                }
+                navigation.replace('Main');
             } else {
-                Alert.alert('Error', 'Invalid credentials');
+                Alert.alert('Error', data?.message || 'Invalid credentials');
             }
 
         } catch (error: any) {
             console.error('Login error:', error);
-            Alert.alert('Login Failed', error.response?.data?.message || 'Invalid email or password');
+            const errorMessage = error.response?.data?.message || error.message || 'Invalid email or password';
+            Alert.alert('Login Failed', errorMessage);
         }
     };
 

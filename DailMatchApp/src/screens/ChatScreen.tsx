@@ -379,7 +379,7 @@ const ChatScreen = ({ route, navigation }: any) => {
                                 style={styles.messageAvatar}
                             />
                         )}
-                        <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage, isImage && { padding: 5, backgroundColor: isMe ? '#FF4B6E' : '#FFF' }]}>
+                        <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage, isImage && { padding: 5, backgroundColor: isMe ? '#000000' : '#FFF' }]}>
                             {isImage ? (
                                 <Image
                                     source={{ uri: imageUrl! }}
@@ -515,7 +515,8 @@ const ChatScreen = ({ route, navigation }: any) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent />
+            <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -596,37 +597,40 @@ const ChatScreen = ({ route, navigation }: any) => {
                     </View>
                 )}
 
-                {/* Input */}
-                <View style={styles.inputContainer}>
-                    <TouchableOpacity
-                        style={styles.attachButton}
-                        onPress={() => setShowAttachmentMenu(!showAttachmentMenu)}
-                    >
-                        <Icon name="plus" size={24} color="#FF4B6E" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.aiButton}
-                        onPress={handleManualAI}
-                    >
-                        <Icon name="creation" size={22} color="#7B61FF" />
-                    </TouchableOpacity>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Type a message..."
-                        placeholderTextColor="#999"
-                        value={inputText}
-                        onChangeText={(text) => {
-                            setInputText(text);
-                            socketRef.current?.emit('typing', { room: match.id, userId: currentUserId });
-                        }}
-                        multiline
-                    />
+                {/* Input Area */}
+                <View style={styles.inputWrapper}>
+                    <View style={styles.inputContainer}>
+                        <TouchableOpacity
+                            style={styles.attachButton}
+                            onPress={() => setShowAttachmentMenu(!showAttachmentMenu)}
+                        >
+                            <Icon name="plus" size={24} color="#002147" />
+                        </TouchableOpacity>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Type a message..."
+                            placeholderTextColor="#999"
+                            value={inputText}
+                            onChangeText={handleInputChange}
+                            multiline
+                            maxLength={1000}
+                        />
+
+                        <TouchableOpacity
+                            style={styles.aiButton}
+                            onPress={handleManualAI}
+                        >
+                            <Icon name="creation" size={20} color="#002147" />
+                        </TouchableOpacity>
+                    </View>
+
                     <TouchableOpacity
                         style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
                         onPress={() => handleSend()}
                         disabled={!inputText.trim()}
                     >
-                        <Icon name="send" size={22} color={inputText.trim() ? '#FFF' : '#CCC'} />
+                        <Icon name="send" size={22} color="#FFF" />
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -695,8 +699,8 @@ const ChatScreen = ({ route, navigation }: any) => {
                                 handleUnmatch();
                             }}
                         >
-                            <Icon name="account-remove-outline" size={20} color="#FF3B30" />
-                            <Text style={[styles.optionsText, { color: '#FF3B30' }]}>Unmatch</Text>
+                            <Icon name="account-remove-outline" size={20} color="#000000" />
+                            <Text style={[styles.optionsText, { color: '#000000' }]}>Unmatch</Text>
                         </TouchableOpacity>
                     </View>
                 </TouchableOpacity>
@@ -709,7 +713,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
-        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 25) + 5 : 0,
     },
     header: {
         flexDirection: 'row',
@@ -873,53 +876,67 @@ const styles = StyleSheet.create({
     dot3: {
         opacity: 0.8,
     },
-    inputContainer: {
+    inputWrapper: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         paddingHorizontal: 10,
-        paddingVertical: 10,
+        paddingVertical: 12,
         backgroundColor: '#FFFFFF',
         borderTopWidth: 1,
-        borderTopColor: '#E0E0E0',
+        borderTopColor: '#F0F0F0',
+    },
+    inputContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        backgroundColor: '#F5F5F7',
+        borderRadius: 25,
+        paddingHorizontal: 5,
+        paddingVertical: 5,
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
     },
     attachButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F5F5F5',
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 8,
     },
     aiButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F0EBFF',
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 8,
     },
     input: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-        paddingHorizontal: 15,
-        paddingVertical: 10,
         fontSize: 16,
         color: '#333',
-        maxHeight: 100,
+        maxHeight: 120,
+        paddingHorizontal: 12,
+        paddingTop: 8,
+        paddingBottom: 8,
     },
     sendButton: {
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#002147',
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
     },
-    sendButtonActive: {},
     sendButtonDisabled: {
-        opacity: 0.5,
+        backgroundColor: '#E0E0E0',
+        opacity: 0.6,
+        elevation: 0,
     },
     // Modal Styles
     modalOverlay: {
@@ -1022,12 +1039,12 @@ const styles = StyleSheet.create({
     icebreakerButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#7B61FF',
+        backgroundColor: '#002147',
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 25,
         elevation: 3,
-        shadowColor: '#7B61FF',
+        shadowColor: '#002147',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 5,

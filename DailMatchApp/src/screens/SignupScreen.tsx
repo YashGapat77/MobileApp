@@ -29,36 +29,48 @@ const SignupScreen = ({ navigation }: any) => {
             return;
         }
 
-        if (parseInt(age) < 18) {
-            Alert.alert('Error', 'You must be at least 18 years old');
+        const parsedAge = parseInt(age);
+        if (isNaN(parsedAge) || parsedAge < 18) {
+            Alert.alert('Error', 'Please enter a valid age (18 or older)');
             return;
         }
 
         try {
             const userData = {
-                name,
-                email,
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
                 password,
-                age: parseInt(age),
+                age: parsedAge,
                 gender,
             };
 
+            console.log('[Signup] Attempting signup for:', userData.email);
             const data = await authAPI.signup(userData);
+            console.log('[Signup] Response received:', data ? 'Success' : 'Empty');
 
-            if (data.token) {
-                // authAPI handles storing authToken and userId
-                // We store the full user object for profile use
-                await AsyncStorage.setItem('user', JSON.stringify(data.user));
+            if (data && data.token) {
+                try {
+                    // Store user data if available
+                    if (data.user) {
+                        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                } catch (storageError) {
+                    console.warn('[Signup] Failed to store user object:', storageError);
+                    // Continue anyway since we have the token
+                }
 
                 Alert.alert('Success', 'Account created!', [
                     { text: 'Continue', onPress: () => navigation.replace('Onboarding') }
                 ]);
             } else {
-                Alert.alert('Error', 'Signup failed. Please try again.');
+                const msg = data?.message || 'Signup failed. Please try again.';
+                console.error('[Signup] Error from API:', msg);
+                Alert.alert('Error', msg);
             }
         } catch (error: any) {
-            console.error('Signup error:', error);
-            Alert.alert('Signup Failed', error.response?.data?.message || 'Unable to create account');
+            console.error('[Signup] Critical error:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Unable to create account';
+            Alert.alert('Signup Failed', errorMessage);
         }
     };
 
@@ -72,7 +84,7 @@ const SignupScreen = ({ navigation }: any) => {
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.keyboardView}
                 >
                     <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -190,7 +202,7 @@ const SignupScreen = ({ navigation }: any) => {
 
                             <View style={styles.loginContainer}>
                                 <Text style={styles.loginText}>Already have an account? </Text>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                                     <Text style={styles.loginLink}>Log In</Text>
                                 </TouchableOpacity>
                             </View>

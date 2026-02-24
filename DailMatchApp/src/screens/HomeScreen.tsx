@@ -108,28 +108,51 @@ const HomeScreen = ({ navigation }: any) => {
         ],
     };
 
+    // Daily Limit State
+    const [swipedCount, setSwipedCount] = useState(0);
+    const [lastResetTime, setLastResetTime] = useState<number | null>(null);
+
     const loadProfiles = React.useCallback(async () => {
         try {
             setLoading(true);
-            setCurrentIndex(0);
 
-            // Load filters
-            let filters = {};
-            try {
-                const savedFilters = await AsyncStorage.getItem('filters');
-                if (savedFilters) {
-                    filters = JSON.parse(savedFilters);
-                }
-            } catch (e) {
-                console.error('Error loading filters', e);
+            // Check daily limit
+            const now = Date.now();
+            const storedResetTime = await AsyncStorage.getItem('lastResetTime');
+            const storedSwipedCount = await AsyncStorage.getItem('swipedCount');
+            const storedDailyProfiles = await AsyncStorage.getItem('dailyProfiles');
+
+            let currentSwipedCount = storedSwipedCount ? parseInt(storedSwipedCount) : 0;
+            let currentLastResetTime = storedResetTime ? parseInt(storedResetTime) : 0;
+            let dailyProfiles: Profile[] = storedDailyProfiles ? JSON.parse(storedDailyProfiles) : [];
+
+            // If it's been more than 24 hours, reset
+            if (!currentLastResetTime || now - currentLastResetTime > 24 * 60 * 60 * 1000) {
+                currentSwipedCount = 0;
+                currentLastResetTime = now;
+
+                // Fetch new profiles and take only 3
+                let filters = {};
+                try {
+                    const savedFilters = await AsyncStorage.getItem('filters');
+                    if (savedFilters) {
+                        filters = JSON.parse(savedFilters);
+                    }
+                } catch (e) { }
+
+                const response = await matchAPI.getPotentialMatches(filters);
+                dailyProfiles = response.matches ? response.matches.slice(0, 3) : [];
+
+                await AsyncStorage.setItem('lastResetTime', currentLastResetTime.toString());
+                await AsyncStorage.setItem('swipedCount', '0');
+                await AsyncStorage.setItem('dailyProfiles', JSON.stringify(dailyProfiles));
             }
 
-            const response = await matchAPI.getPotentialMatches(filters);
-            if (response.matches && response.matches.length > 0) {
-                setProfiles(response.matches);
-            } else {
-                setProfiles([]);
-            }
+            setSwipedCount(currentSwipedCount);
+            setLastResetTime(currentLastResetTime);
+            setProfiles(dailyProfiles);
+            setCurrentIndex(currentSwipedCount);
+
         } catch (error) {
             console.error('Error loading profiles:', error);
             setProfiles([]);
@@ -146,14 +169,19 @@ const HomeScreen = ({ navigation }: any) => {
         return unsubscribe;
     }, [navigation, loadProfiles]);
 
+    const updateSwipedCount = async (newCount: number) => {
+        setSwipedCount(newCount);
+        setCurrentIndex(newCount);
+        await AsyncStorage.setItem('swipedCount', newCount.toString());
+    };
+
     const nextProfile = () => {
-        // Reset Logic
-        setCurrentIndex(prev => prev + 1);
+        const nextIdx = currentIndex + 1;
+        updateSwipedCount(nextIdx);
         setCurrentPhotoIndex(0);
         position.setValue({ x: 0, y: 0 });
         scrollViewRef.current?.scrollTo({ y: 0, animated: false });
 
-        // Fade In Content
         fadeAnim.setValue(0);
         Animated.timing(fadeAnim, {
             toValue: 1,
@@ -162,11 +190,10 @@ const HomeScreen = ({ navigation }: any) => {
         }).start();
     };
 
-    const handleLike = async () => {
+    const handleChatAction = async () => {
         const currentProfile = profiles[currentIndex];
         if (!currentProfile) return;
 
-        // Animate Right
         Animated.timing(position, {
             toValue: { x: SCREEN_WIDTH + 150, y: -50 },
             duration: 400,
@@ -177,10 +204,20 @@ const HomeScreen = ({ navigation }: any) => {
                 if (response.match) {
                     setMatchedProfile(currentProfile);
                     setNewMatchId(response.match_id);
-                    setMatchModalVisible(true);
+                    // Navigate directly to chat as requested
+                    navigation.navigate('Chat', {
+                        match: {
+                            id: response.match_id || 'new_match',
+                            userId: currentProfile.id,
+                            name: currentProfile.name,
+                            photo: currentProfile.photos[0],
+                            lastMessage: 'Say hi!',
+                            timestamp: 'Just now'
+                        }
+                    });
                 }
             } catch (error) {
-                console.error("Like failed", error);
+                console.error("Chat action failed", error);
             }
             nextProfile();
         });
@@ -190,7 +227,6 @@ const HomeScreen = ({ navigation }: any) => {
         const currentProfile = profiles[currentIndex];
         if (!currentProfile) return;
 
-        // Animate Left
         Animated.timing(position, {
             toValue: { x: -SCREEN_WIDTH - 150, y: -50 },
             duration: 400,
@@ -201,35 +237,6 @@ const HomeScreen = ({ navigation }: any) => {
             } catch (error) {
                 console.error("Pass failed", error);
             }
-            nextProfile();
-        });
-    };
-
-    const handleSuperLike = async () => {
-        const currentProfile = profiles[currentIndex];
-        if (!currentProfile) return;
-
-        if (superLikesLeft <= 0) {
-            Alert.alert('No Super Likes', 'Get Premium for more!');
-            return;
-        }
-
-        // Animate Up
-        Animated.timing(position, {
-            toValue: { x: 0, y: -SCREEN_HEIGHT - 100 },
-            duration: 400,
-            useNativeDriver: true,
-        }).start(async () => {
-            // Mock API for now or add endpoint
-            setSuperLikesLeft(prev => prev - 1);
-            try {
-                // Treat as like for now
-                const response = await matchAPI.swipeRight(currentProfile.id, "Super Like!");
-                if (response.match) {
-                    setMatchedProfile(currentProfile);
-                    setMatchModalVisible(true);
-                }
-            } catch (e) { }
             nextProfile();
         });
     };
@@ -249,22 +256,7 @@ const HomeScreen = ({ navigation }: any) => {
     if (loading) {
         return (
             <SafeAreaView style={styles.container}>
-                <ActivityIndicator size="large" color="#FF4B6E" style={{ marginTop: 50 }} />
-            </SafeAreaView>
-        );
-    }
-
-    if (currentIndex >= profiles.length) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" />
-                <View style={styles.endOfFeed}>
-                    <Icon name="check-circle-outline" size={80} color="#DDD" />
-                    <Text style={styles.endText}>That's everyone!</Text>
-                    <TouchableOpacity style={styles.reloadButton} onPress={loadProfiles}>
-                        <Text style={styles.reloadButtonText}>Refresh</Text>
-                    </TouchableOpacity>
-                </View>
+                <ActivityIndicator size="large" color="#002147" style={{ marginTop: 50 }} />
             </SafeAreaView>
         );
     }
@@ -275,95 +267,96 @@ const HomeScreen = ({ navigation }: any) => {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-            {/* Header */}
+            {/* Header - Always Visible */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                    <Icon name="account-circle" size={32} color="#000" />
-                </TouchableOpacity>
+                <View style={{ width: 32 }} />
                 <Text style={styles.logo}>SoulFix</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Filters')}>
-                        <Icon name="tune" size={28} color="#000" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.navigate('Matches')}>
-                        <Icon name="message-text-outline" size={28} color="#000" />
+                <TouchableOpacity onPress={() => navigation.navigate('Filters')}>
+                    <Icon name="tune" size={28} color="#000" />
+                </TouchableOpacity>
+            </View>
+
+            {currentIndex >= profiles.length || currentIndex >= 3 ? (
+                <View style={styles.endOfFeed}>
+                    <Icon name="clock-outline" size={80} color="#DDD" />
+                    <Text style={styles.endTitle}>That's your 3 for today!</Text>
+                    <Text style={styles.endSub}>Come back in 24 hours for more curated matches.</Text>
+                    <TouchableOpacity
+                        style={styles.reloadButton}
+                        onPress={() => navigation.navigate('Matches')}
+                    >
+                        <Text style={styles.reloadButtonText}>View Your Chats</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
-
-            {/* Animated Card */}
-            <Animated.View
-                style={[
-                    styles.cardContainer,
-                    {
-                        opacity: fadeAnim,
-                        transform: rotateAndTranslate.transform
-                    }
-                ]}
-            >
-                <ScrollView
-                    ref={scrollViewRef}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 120 }}
+            ) : (
+                <Animated.View
+                    style={[
+                        styles.cardContainer,
+                        {
+                            opacity: fadeAnim,
+                            transform: rotateAndTranslate.transform
+                        }
+                    ]}
                 >
-                    {/* Header Info */}
-                    <View style={styles.profileInfoHead}>
-                        <Text style={styles.name}>{profile.name}, {profile.age}</Text>
-                        <Icon name="check-decagram" size={18} color="#1DA1F2" />
-                    </View>
-
-                    {/* Photos */}
-                    <View style={styles.photoSection}>
-                        <Image source={{ uri: profile.photos[currentPhotoIndex] }} style={styles.mainPhoto} />
-
-                        {/* Taps */}
-                        <View style={styles.tapOverlay}>
-                            <TouchableOpacity style={{ flex: 1 }} onPress={prevPhoto} />
-                            <TouchableOpacity style={{ flex: 1 }} onPress={nextPhoto} />
+                    <ScrollView
+                        ref={scrollViewRef}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: 150 }}
+                    >
+                        <View style={styles.profileInfoHead}>
+                            <Text style={styles.name}>{profile.name}, {profile.age}</Text>
+                            <Icon name="check-decagram" size={18} color="#1DA1F2" />
                         </View>
 
-                        {/* Indicators */}
-                        <View style={styles.indicators}>
-                            {profile.photos.map((_, i) => (
-                                <View key={i} style={[styles.indicator, i === currentPhotoIndex && styles.indicatorActive]} />
-                            ))}
+                        <View style={styles.photoSection}>
+                            <Image source={{ uri: profile.photos[currentPhotoIndex] }} style={styles.mainPhoto} />
+                            <View style={styles.tapOverlay}>
+                                <TouchableOpacity style={{ flex: 1 }} onPress={prevPhoto} />
+                                <TouchableOpacity style={{ flex: 1 }} onPress={nextPhoto} />
+                            </View>
+                            <View style={styles.indicators}>
+                                {profile.photos.map((_, i) => (
+                                    <View key={i} style={[styles.indicator, i === currentPhotoIndex && styles.indicatorActive]} />
+                                ))}
+                            </View>
                         </View>
-                    </View>
 
-                    {/* Bio */}
-                    <Text style={styles.bio}>{profile.bio}</Text>
+                        <Text style={styles.bio}>{profile.bio}</Text>
 
-                    {/* Details */}
-                    <View style={styles.detailsBox}>
-                        {profile.occupation && <View style={styles.detailRow}><Icon name="briefcase-outline" size={18} /><Text style={styles.detailText}>{profile.occupation}</Text></View>}
-                        {profile.location && <View style={styles.detailRow}><Icon name="map-marker-outline" size={18} /><Text style={styles.detailText}>{profile.location}</Text></View>}
-                        {profile.height && <View style={styles.detailRow}><Icon name="human-male-height" size={18} /><Text style={styles.detailText}>{profile.height}</Text></View>}
-                    </View>
-
-                    {/* Prompts */}
-                    {profile.prompts?.map((prompt, i) => (
-                        <View key={i} style={styles.promptCard}>
-                            <Text style={styles.promptQ}>{prompt.question}</Text>
-                            <Text style={styles.promptA}>{prompt.answer}</Text>
+                        <View style={styles.detailsBox}>
+                            {profile.occupation && <View style={styles.detailRow}><Icon name="briefcase-outline" size={18} /><Text style={styles.detailText}>{profile.occupation}</Text></View>}
+                            {profile.location && <View style={styles.detailRow}><Icon name="map-marker-outline" size={18} /><Text style={styles.detailText}>{profile.location}</Text></View>}
+                            {profile.height && <View style={styles.detailRow}><Icon name="human-male-height" size={18} /><Text style={styles.detailText}>{profile.height}</Text></View>}
                         </View>
-                    ))}
-                </ScrollView>
-            </Animated.View>
 
-            {/* Actions Buttons */}
-            <View style={styles.actionButtons}>
-                <TouchableOpacity onPress={handlePass} style={[styles.btn, styles.btnPass]}>
-                    <Icon name="close" size={30} color="#000" />
-                </TouchableOpacity>
+                        {profile.prompts?.map((prompt, i) => (
+                            <View key={i} style={styles.promptCard}>
+                                <Text style={styles.promptQ}>{prompt.question}</Text>
+                                <Text style={styles.promptA}>{prompt.answer}</Text>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </Animated.View>
+            )}
 
-                <TouchableOpacity onPress={handleSuperLike} style={[styles.btn, styles.btnSuper]}>
-                    <Icon name="star" size={24} color="#000" />
-                </TouchableOpacity>
+            {/* Actions Buttons - Only show if not at end */}
+            {!(currentIndex >= profiles.length || currentIndex >= 3) && (
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity onPress={handlePass} style={[styles.btn, styles.btnCancel]}>
+                        <Icon name="cancel" size={32} color="#FF5A5F" />
+                        <Text style={styles.btnLabel}>Cancel</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleLike} style={[styles.btn, styles.btnLike]}>
-                    <Icon name="heart" size={30} color="#000" />
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity onPress={handleChatAction} style={[styles.btn, styles.btnChat]}>
+                        <Icon name="chat" size={32} color="#FFF" />
+                        <Text style={[styles.btnLabel, { color: '#FFF' }]}>Chat</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Match Modal */}
+
+
 
             {/* Match Modal */}
             <Modal
@@ -428,7 +421,7 @@ const styles = StyleSheet.create({
     logo: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF4B6E',
+        color: '#002147',
     },
     cardContainer: {
         flex: 1,
@@ -505,12 +498,12 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         marginBottom: 15,
         borderLeftWidth: 3,
-        borderLeftColor: '#FF4B6E',
+        borderLeftColor: '#002147',
     },
     promptQ: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#FF4B6E',
+        color: '#002147',
         marginBottom: 5,
         textTransform: 'uppercase',
     },
@@ -520,13 +513,16 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
     actionButtons: {
+        position: 'absolute',
+        bottom: 90, // Resting above the 65-80px tab bar
+        left: 0,
+        right: 0,
         flexDirection: 'row',
         justifyContent: 'space-evenly',
-        paddingVertical: 15,
         alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderTopWidth: 1,
-        borderTopColor: '#F5F5F5',
+        backgroundColor: 'transparent',
+        zIndex: 20,
+        elevation: 20,
     },
     btn: {
         width: 60,
@@ -537,45 +533,62 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.2,
         shadowRadius: 5,
-        elevation: 5,
-        borderWidth: 1,
-        borderColor: '#EEE', // Neutral border
+        elevation: 8, // Higher elevation to float
+        borderWidth: 0, // Clean look
     },
-    btnPass: {
-        // No extra color
+    btnCancel: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#FFF',
     },
-    btnLike: {
-        width: 70,
+    btnChat: {
+        width: 140,
         height: 70,
         borderRadius: 35,
-        borderColor: '#000', // Highlight primary action with black
-        borderWidth: 1,
+        backgroundColor: '#002147',
+        flexDirection: 'row',
+        gap: 8,
     },
-    btnSuper: {
-        width: 50,
-        height: 50,
+    btnLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#FF5A5F',
+        marginTop: 4,
     },
     endOfFeed: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
-    endText: {
+    endTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#002147',
         marginTop: 20,
-        fontSize: 18,
-        color: '#999',
+        textAlign: 'center',
+    },
+    endSub: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginTop: 12,
+        lineHeight: 24,
     },
     reloadButton: {
-        marginTop: 20,
-        padding: 15,
-        backgroundColor: '#FF4B6E',
-        borderRadius: 25,
+        marginTop: 30,
+        paddingHorizontal: 30,
+        paddingVertical: 15,
+        backgroundColor: '#002147',
+        borderRadius: 30,
     },
     reloadButtonText: {
         color: '#FFF',
         fontWeight: 'bold',
+        fontSize: 16,
     },
     // Match Modal
     modalOverlay: {
@@ -595,7 +608,7 @@ const styles = StyleSheet.create({
     matchTitle: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#FF4B6E',
+        color: '#002147',
         marginBottom: 10,
         fontFamily: Platform.OS === 'android' ? 'serif' : 'Georgia',
         fontStyle: 'italic',
@@ -616,17 +629,17 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 40,
         borderWidth: 3,
-        borderColor: '#FF4B6E',
+        borderColor: '#002147',
     },
     connectLine: {
         width: 50,
         height: 2,
-        backgroundColor: '#FF4B6E',
+        backgroundColor: '#002147',
         marginHorizontal: -5,
         zIndex: -1,
     },
     chatButton: {
-        backgroundColor: '#FF4B6E',
+        backgroundColor: '#002147',
         width: '100%',
         padding: 15,
         borderRadius: 30,
